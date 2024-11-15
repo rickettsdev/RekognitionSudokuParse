@@ -1,61 +1,48 @@
 import json
 import sys
 import pygame
+import argparse
+import SudokuRekognitionParser
 from pygame.locals import *
 
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
+# How it works.
+# starting reading numbers in rows once there are more than 1 in a row. At that point, we assume following rows are 
+# part of sudoku board. We read until end of list, and truncate anything after 9 rows or columns to avoid page numbers
+# or other noise. Board should be clean.
+# Recommendation: make sure top of board is at top of photo.
 
-# Based off of results, ['Geometry']['BoundingBox'] and ['DetectedText'] attributes from Rekognition Text Analysis.
-# 
-# 1st - create list of elements by approximate row- only adding ones with more than 1 feature +-10 units away.
-# 2nd - create list of elements by approximate column- only adding ones with more than 1 feature +-10 units away, AND greater than the average of the 1st row in previous step.
-# 3rd - to fill for 9x9 grid, for each cell, check if there is a single common feature between row list and column list. 
+parser = argparse.ArgumentParser(description="Sudoku Image Reader and Solver")
+parser.add_argument('image', help='The image to process')
+parser.add_argument('-d', '--data', required=True) # to avoid multiple calls during dev to aws.
+parser.add_argument('-s', '--confidence', default=95.0, help='Rekognition Confidence')
 
+args = parser.parse_args()
 
-bounding_boxes = []
-with open('./sudoku_easy_response.json', 'r') as file:
-    data = json.load(file)
+# Let us extract the response from json file here. Normally, we would make an API call for this data. Then we would filter 
+# it so we only have the bounding boxes, ids, and detected number.
+bounding_boxes = SudokuRekognitionParser.extractData(args.data, args.confidence)
 
-    for detected in sorted(data['TextDetections'], key=lambda x: x['Geometry']['BoundingBox']['Left']):
-        if detected['Confidence'] < 85.0 or detected['Type'] == 'LINE':
-            continue
-        map = {}
-        map['box'] = detected['Geometry']['BoundingBox']
-        map['text'] = detected['DetectedText']
-
-        bounding_boxes.append(map)
-
-
-screen_width = 800
-screen_height = 600
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Draw a Square")
+# Pygame setup. To show the edited image
+screen = pygame.display.set_mode((SudokuRekognitionParser.SCREEN_WIDTH, SudokuRekognitionParser.SCREEN_HEIGHT))
+pygame.display.set_caption("Sudoku")
 pygame.init()
 
 # Load the background image
-background = pygame.image.load('test.jpg').convert()
-background = pygame.transform.scale(background, (screen_width, screen_height))
+background = pygame.image.load(args.image).convert()
+background = pygame.transform.scale(background, (SudokuRekognitionParser.SCREEN_WIDTH, SudokuRekognitionParser.SCREEN_HEIGHT))
 screen.blit(background, (0, 0))
 
-for box in  sorted(bounding_boxes, key=lambda x: x['box']['Top']):
-    square_position2 = (screen_width * box['box']["Left"], screen_height * box['box']["Top"])
-    square_size2 = (screen_width * box['box']["Width"], screen_height * box['box']["Height"])
+SudokuRekognitionParser.drawBoxes(bounding_boxes, screen)
 
-    print("Box coords: x, y: " + str(square_position2) + " size: " + str(square_size2))
+# 3rd - to fill for 9x9 grid, for each cell, check if there is a single common feature between row list and column list. 
+# for column and row bunch sorted lists, for 9x9 index, eg check intersection row[x], col[y]. If none, empty.
+matrix = SudokuRekognitionParser.createMatrix(bounding_boxes)
 
-    pygame.draw.rect(screen, RED, (*square_position2, *square_size2), 2)
+print("\nDetected Matrix")
+print("------------------")
+SudokuRekognitionParser.printMatrix(matrix)
 
-    font = pygame.font.Font(None, 36)
-    word = box['text']
-    print("Text: " + box['text'])
-    text = font.render(word, True, WHITE)
-
-    text_rect = text.get_rect(center=square_position2)
-    
-    screen.blit(text, text_rect)
-
-
+# Run loop to show display screen. This is mostly for demo purposes.
 running = True
 while running:
     for event in pygame.event.get():
@@ -67,3 +54,6 @@ while running:
 
 pygame.quit()
 sys.exit()
+
+# Helper functions
+
