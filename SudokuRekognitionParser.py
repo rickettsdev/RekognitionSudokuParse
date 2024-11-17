@@ -8,7 +8,7 @@ SCREEN_HEIGHT = 600
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 
-def createMatrix(bounding_boxes: list) -> list[list[str]]:
+def createMatrix(bounding_boxes: list) -> list[list[int]]:
     (columnBunchSorted, rowBunchSorted) = rowColSorted(bounding_boxes)
     matrix =[[0 for _ in range(len(rowBunchSorted))] for _ in range(len(columnBunchSorted))]
     for x in range(len(columnBunchSorted)):

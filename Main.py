@@ -1,8 +1,8 @@
-import json
 import sys
 import pygame
 import argparse
 import SudokuRekognitionParser
+import SudokuSolver
 from pygame.locals import *
 
 # How it works.
@@ -32,6 +32,7 @@ background = pygame.image.load(args.image).convert()
 background = pygame.transform.scale(background, (SudokuRekognitionParser.SCREEN_WIDTH, SudokuRekognitionParser.SCREEN_HEIGHT))
 screen.blit(background, (0, 0))
 
+# debugging, and it looks kinda sick
 SudokuRekognitionParser.drawBoxes(bounding_boxes, screen)
 
 # 3rd - to fill for 9x9 grid, for each cell, check if there is a single common feature between row list and column list. 
@@ -41,6 +42,12 @@ matrix = SudokuRekognitionParser.createMatrix(bounding_boxes)
 print("\nDetected Matrix")
 print("------------------")
 SudokuRekognitionParser.printMatrix(matrix)
+
+solved = SudokuSolver.solveSudoku(matrix)
+
+print("\nSolved Matrix")
+print("------------------")
+SudokuRekognitionParser.printMatrix(solved)
 
 # Run loop to show display screen. This is mostly for demo purposes.
 running = True
