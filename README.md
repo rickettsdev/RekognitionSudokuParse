@@ -1,7 +1,8 @@
 # RekognitionSudokuParse
 Takes json data generated from Rekognition of an image with a Sudoku board on it. 
 
-python was managed using a virtual environment. todo: Need to provide requirements.txt.
+Python was managed using a virtual environment.
+
 example command:
 
 python Main.py examples/sudoku_easy.jpg -d examples/sudoku_easy.json
