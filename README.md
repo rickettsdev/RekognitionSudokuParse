@@ -1,4 +1,5 @@
 # RekognitionSudokuParse
+TODO: This is still a work in progress and requires clean up.
 Takes json data generated from Rekognition of an image with a Sudoku board on it. Displays
 to terminal the solution for the scanned board. Please make sure board is clean.
 
